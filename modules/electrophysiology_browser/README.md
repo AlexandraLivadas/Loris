@@ -36,5 +36,5 @@ electrophysiology_browser_edit_annotations
 
 ## Download
 
-You can download all the files related to a recording and its derivatives (channel information,
-electrode information, task event information, the actual recording, the annotations and their metadata...).
+You can download all the files related to a recording (channel information,
+electrode information, task event information, the actual recording) -- as well as its derivatives (annotations and their metadata).
