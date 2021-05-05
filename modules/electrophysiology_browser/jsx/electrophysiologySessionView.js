@@ -55,6 +55,7 @@ class ElectrophysiologySessionView extends Component {
         {
           file: {
             name: '',
+            id: '',
             task: {
               frequency: {
                 sampling: '',
@@ -201,6 +202,7 @@ class ElectrophysiologySessionView extends Component {
         appState.isLoaded = true;
         appState.patient.info = data.patient;
         let database = [];
+        // let physiological_file_id = [];
         for (let i = 0; i < data.database.length; i++) {
           database.push(data.database[i]);
         }
@@ -262,6 +264,7 @@ class ElectrophysiologySessionView extends Component {
               id={'filename_panel_' + i}
               title={this.state.database[i].file.name}
               data={this.state.database[i].file}
+              fileId={this.state.database[i].file.id}
             />
           </div>
         );

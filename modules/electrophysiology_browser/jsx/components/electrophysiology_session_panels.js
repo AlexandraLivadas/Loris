@@ -18,7 +18,9 @@ class FilePanel extends Component {
     super(props);
     this.state = {
       data: this.props.data,
+      id: this.props.fileId,
     };
+    this.handleClick = this.handleClick.bind(this);
   }
 
   /**
@@ -248,6 +250,7 @@ class FilePanel extends Component {
                   >
                     <button id='btn_download_all_files'
                             style={stylesFile.button.download}
+                            onClick={this.handleClick}
                     >Download</button>
                   </a>
                 </div>
@@ -333,6 +336,7 @@ class FilePanel extends Component {
                   >
                     <button id='btn_download_annotations'
                             style={stylesFile.button.download}
+                            onClick={this.handleClick}
                     >Download</button>
                   </a>
                 </div>
@@ -555,6 +559,14 @@ class FilePanel extends Component {
       </Panel>
     );
   }
+
+    /**
+     * jsdoc
+     */
+    handleClick() {
+        console.log('The link was clicked.');
+        console.log(this.state.id);
+    }
 }
 FilePanel.propTypes = {
   id: PropTypes.string,
