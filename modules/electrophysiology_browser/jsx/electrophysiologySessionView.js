@@ -202,7 +202,6 @@ class ElectrophysiologySessionView extends Component {
         appState.isLoaded = true;
         appState.patient.info = data.patient;
         let database = [];
-        // let physiological_file_id = [];
         for (let i = 0; i < data.database.length; i++) {
           database.push(data.database[i]);
         }
@@ -265,6 +264,9 @@ class ElectrophysiologySessionView extends Component {
               title={this.state.database[i].file.name}
               data={this.state.database[i].file}
               fileId={this.state.database[i].file.id}
+              url={loris.BaseURL + '/electrophysiology_browser/sessions/'
+                    + this.props.sessionid
+                    + '?outputType=' + this.state.url.params['outputType']}
             />
           </div>
         );

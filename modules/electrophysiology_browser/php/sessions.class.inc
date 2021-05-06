@@ -148,15 +148,13 @@ class Sessions extends \NDB_Page
             ));
         }
 
-        $method = $request->getMethod();
-        //If method is POST, insert or update annotations
-        //Can update annotations if output type is raw (adding new annotations)
-        if ($method == 'POST') {
+        switch ($request->getMethod()) {
+        case 'POST':
             $this->_updateAnnotation($request, $outputType);
-        }
-        //If method is DELETE, delete annotation instance
-        if ($method == 'DELETE' && $outputType != 'raw') {
+        case 'DELETE':
             $this->_deleteAnnotation($request, $outputType);
+        case 'PUT':
+            self::updateDerivativeFiles(11);
         }
 
         return $this->getSessionData($outputType);
@@ -199,8 +197,8 @@ class Sessions extends \NDB_Page
 
         $response['sessions']    = $sessions;
         $currentIndex            = array_search($this->sessionID, $sessions);
-        $response['nextSession'] = $sessions[$currentIndex + 1] ?? '';
-        $response['prevSession'] = $sessions[$currentIndex - 1] ?? '';
+        $response['nextSession'] = $sessions[$currentIndex+1] ?? '';
+        $response['prevSession'] = $sessions[$currentIndex-1] ?? '';
 
         return new \LORIS\Http\Response\JSON\OK($response);
     }
@@ -675,10 +673,19 @@ class Sessions extends \NDB_Page
                     $tsv_file  = fopen($tsv_path, 'a+');
                     $json_file = fopen($json_path, 'a+');
                     $tgz_file  = new \PharData($tgz_path);
-                    $tgz_file->addFile($tsv_path);
-                    $tgz_file->addFile($json_path);
+                    $tgz_file->addFile($tsv_path, basename($tsv_path));
+                    $tgz_file->addFile($json_path, basename($json_path));
                     fclose($tsv_file);
                     fclose($json_file);
+
+                    $f    = file_get_contents($tgz_path);
+                    $hash = sodium_crypto_generichash($f);
+                    //Update database with hash
+                    $db->update(
+                        'physiological_annotation_archive',
+                        ['Blake2bHash' => bin2hex($hash)],
+                        ['PhysiologicalFileID' => $physioFileID]
+                    );
 
                     $params_tsv     = [
                         'PhysiologicalFileID' => $physioFileID,
@@ -827,12 +834,12 @@ class Sessions extends \NDB_Page
      * Updates the derivative files associated with the given
      * physiological file ID
      *
-     * @param int|null $physioFileID Physiological file ID
+     * @param int $physioFileID File ID of annotation files to update
      *
      * @return void
      * @throws SodiumException
      */
-    static function updateDerivativeFiles(int $physioFileID=null): void
+    static function updateDerivativeFiles(int $physioFileID): void
     {
         $db = \NDB_Factory::singleton()->database();
 
@@ -1024,15 +1031,15 @@ class Sessions extends \NDB_Page
 
             //Make archive tgz and create new hash
             $tgz_file = new \PharData($tgz_path);
-            $tgz_file->addFile($tsv_path);
-            $tgz_file->addFile($json_path);
+            $tgz_file->addFile($tsv_path, basename($tsv_path));
+            $tgz_file->addFile($json_path, basename($json_path));
 
             $f    = file_get_contents($tgz_path);
             $hash = sodium_crypto_generichash($f);
             //Update database with hash
             $db->update(
                 'physiological_annotation_archive',
-                ['Blake2bHash' => $hash],
+                ['Blake2bHash' => bin2hex($hash)],
                 ['PhysiologicalFileID' => $physioFileID]
             );
         }
