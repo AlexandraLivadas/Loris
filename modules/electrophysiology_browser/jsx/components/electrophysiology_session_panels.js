@@ -21,8 +21,8 @@ class FilePanel extends Component {
       data: this.props.data,
       id: this.props.fileId,
     };
-    this.handleClick = this.handleClick.bind(this);
     this.showAlertMessage = this.showAlertMessage.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
 
   /**
@@ -331,10 +331,6 @@ class FilePanel extends Component {
                 >Annotations</div>
                 <div className={'col-xs-2'}>
                   <a id='download_annotations'
-                     href={'/mri/jiv/get_file.php?file='
-                          + this.state.data.downloads[4].file}
-                     target='_blank'
-                     download={this.state.data.downloads[0].file}
                      onClick={this.handleClick}
                   >
                     <button id='btn_download_annotations'
