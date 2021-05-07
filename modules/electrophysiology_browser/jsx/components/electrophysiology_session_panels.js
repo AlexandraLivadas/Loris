@@ -20,9 +20,10 @@ class FilePanel extends Component {
     this.state = {
       data: this.props.data,
       physiologicalFileID: this.props.physiologicalFileID,
+      annotationsAction: loris.BaseURL
+                         + '/electrophysiology_browser/annotations/',
     };
     this.showAlertMessage = this.showAlertMessage.bind(this);
-    this.updateAnnotationFiles = this.updateAnnotationFiles.bind(this);
   }
 
   /**
@@ -245,9 +246,10 @@ class FilePanel extends Component {
                 >All Files</div>
                 <div className={'col-xs-2'}>
                   <a id='download_all_files'
-                     onClick={() => this.updateAnnotationFiles(
-                         this.state.data.downloads[5].file
-                     )}
+                    href={this.state.annotationsAction
+                      + '&physioFileID=' + this.state.physiologicalFileID
+                      + '&filePath=' + this.state.data.downloads[5].file}
+                    target='_blank'
                   >
                     <button id='btn_download_all_files'
                             style={stylesFile.button.download}
@@ -328,11 +330,12 @@ class FilePanel extends Component {
                      style={stylesFile.div.element.download_title}
                 >Annotations</div>
                 <div className={'col-xs-2'}>
-                  <a id='download_annotations'
-                     onClick={() => this.updateAnnotationFiles(
-                         this.state.data.downloads[4].file
-                     )}
-                     download={this.state.data.downloads[0].file}
+                  <a
+                    id='download_annotations'
+                    href={this.state.annotationsAction
+                      + '&physioFileID=' + this.state.physiologicalFileID
+                      + '&filePath=' + this.state.data.downloads[4].file}
+                    target='_blank'
                   >
                     <button id='btn_download_annotations'
                             style={stylesFile.button.download}
@@ -559,69 +562,38 @@ class FilePanel extends Component {
     );
   }
 
-    /**
-     * Called by download all or download annotations button to
-     * update the annotation files before downloading
-     *
-     * @param {string} filePath Specifies if downloading
-     *                          all files or annotation files
-     */
-    updateAnnotationFiles(filePath) {
-        const dataURL = this.props.action
-                        + '&physioFileID=' + this.state.physiologicalFileID
-                        + '&filePath=' + filePath;
-        fetch(dataURL, {
-            method: 'GET',
-        }).then((response) => {
-            if (!response.ok) {
-                console.error(response.status);
-                return;
-            }
-            let msgType = 'success';
-            let message = 'Your files will be downloaded in 2 seconds!';
-            this.showAlertMessage(msgType, message);
-        }).catch((error) => {
-            console.error(error);
+  /**
+   * Display a success/error alert message after form submission
+   * @param {string} msgType - error/success message
+   * @param {string} message - message content
+   */
+  showAlertMessage(msgType, message) {
+    let type = 'success';
+    let title = 'Files updated!';
+    let text = message || '';
+    let timer = null;
+    let confirmation = true;
+    let callback = function() {};
 
-            let msgType = 'error';
-            let message = 'Failed to update annotation files';
-            this.showAlertMessage(msgType, message);
-            console.log(message);
-        });
+    if (msgType === 'success') {
+        title = 'Files Updated!';
+        timer = 2000;
+        confirmation = false;
+    } else if (msgType === 'error') {
+        type = 'error';
+        title = 'Error!';
     }
 
-    /**
-     * Display a success/error alert message after form submission
-     * @param {string} msgType - error/success message
-     * @param {string} message - message content
-     */
-    showAlertMessage(msgType, message) {
-        let type = '';
-        let title = 'Files updated!';
-        const text = message || '';
-        let timer = null;
-        let confirmation = true;
-        let callback = function() {};
-
-        if (msgType === 'success') {
-            title = 'Files Updated!';
-            timer = 2000;
-            confirmation = false;
-        } else if (msgType === 'error') {
-            type = 'error';
-            title = 'Error!';
-        }
-
-        swal.fire({
-            title: title,
-            type: type,
-            text: text,
-            timer: timer,
-            allowOutsideClick: true,
-            allowEscapeKey: true,
-            showConfirmButton: confirmation,
-        }, callback.bind(this));
-    }
+    swal.fire({
+        title: title,
+        type: type,
+        text: text,
+        timer: timer,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: confirmation,
+    }, callback.bind(this));
+  }
 }
 
 FilePanel.propTypes = {
@@ -631,6 +603,7 @@ FilePanel.propTypes = {
   physiologicalFileID: PropTypes.string,
   action: PropTypes.string,
 };
+
 FilePanel.defaultProps = {
   id: 'file_panel',
   title: 'FILENAME',
