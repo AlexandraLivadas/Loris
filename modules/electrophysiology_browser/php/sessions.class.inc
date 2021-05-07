@@ -19,9 +19,6 @@ use \Psr\Http\Message\ResponseInterface;
 use LORIS\electrophysiology_browser\Models\ElectrophysioFile;
 use SodiumException;
 
-require_once "Archive/Tar.php";
-
-
 /**
  * Provides the PHP code for the menu filter for the electrophysiology browser
  *
@@ -48,26 +45,12 @@ class Sessions extends \NDB_Page
      *
      * @return bool whether the user has access
      */
-    function _hasAccess(\User $user): bool
+    function _hasAccess(\User $user) : bool
     {
         return (($user->hasPermission('electrophysiology_browser_view_allsites')
                 || ($user->hasCenter($this->timepoint->getCenterID())
-                    && $user->hasPermission('electrophysiology_browser_view_site'))
+                && $user->hasPermission('electrophysiology_browser_view_site'))
             ) && $user->hasProject($this->timepoint->getProject()->getId()));
-    }
-
-
-    /**
-     * Determine whether the user has permission to create and edit the derivatives
-     *
-     * @param \User $user The user whose access is being checked
-     *
-     * @return bool whether the user can create and edit the derivatives
-     */
-    function _hasEditDerivPerms(\User $user): bool
-    {
-        return ($user->hasPermission('electrophysiology_browser_edit_annotations'));
-
     }
 
     /**
@@ -79,12 +62,11 @@ class Sessions extends \NDB_Page
      *
      * @return void
      * @throws \LorisException  If the session is not found
-     *
      * @throws \NotFound If the session id is non-numerical
      */
     public function loadResources(
         \User $user, ServerRequestInterface $request
-    ): void {
+    ) : void {
 
         $path    = $request->getUri()->getPath();
         $matches = [];
@@ -99,7 +81,7 @@ class Sessions extends \NDB_Page
                 new \SessionID(strval($session_id))
             );
             $this->sessionID = $session_id;
-        } catch (\LorisException $e) {
+        } catch(\LorisException $e) {
             throw new \NotFound("Session not found");
         }
 
@@ -113,7 +95,7 @@ class Sessions extends \NDB_Page
      *
      * @return ResponseInterface The outgoing PSR7 response
      */
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function handle(ServerRequestInterface $request) : ResponseInterface
     {
         $parameters = $request->getQueryParams();
         $user       = $request->getAttribute('user');
@@ -213,14 +195,12 @@ class Sessions extends \NDB_Page
 
         $response = [];
 
-        $sessions = $db->pselect($query, []);
-        $sessions = array_column($sessions, 'SessionID');
-
-        $response['patient']  = $this->getSubjectData($outputType);
-        $response['database'] = array_values(
+        $sessions            = $db->pselect($query, []);
+        $sessions            = array_column($sessions, 'SessionID');
+        $response['patient'] = $this->getSubjectData($outputType);
+        $response['database']    = array_values(
             $this->getFilesData($outputType)
         );
-
         $response['sessions']    = $sessions;
         $currentIndex            = array_search($this->sessionID, $sessions);
         $response['nextSession'] = $sessions[$currentIndex+1] ?? '';
@@ -272,18 +252,17 @@ class Sessions extends \NDB_Page
         $params         = [];
         $params['SID']  = $this->sessionID;
         $query          = 'SELECT
-                            pf.PhysiologicalFileID,
-                            pf.FilePath
-                            FROM
-                            physiological_file pf ';
+                         pf.PhysiologicalFileID,
+                         pf.FilePath
+                       FROM
+                         physiological_file pf ';
 
         if ($outputType != 'all_types') {
-            $query .= 'LEFT JOIN physiological_output_type pot ON ';
-            $query .= 'pf.PhysiologicalOutputTypeID='
+            $query        .= 'LEFT JOIN physiological_output_type pot ON ';
+            $query        .= 'pf.PhysiologicalOutputTypeID='
                 . 'pot.PhysiologicalOutputTypeID ';
-            $query .= 'WHERE SessionID=:SID ';
-            $query .= 'AND pot.OutputTypeName = :OTN ';
-
+            $query        .= 'WHERE SessionID=:SID ';
+            $query        .= 'AND pot.OutputTypeName = :OTN ';
             $params['OTN'] = $outputType;
         } else {
             $query .= "WHERE SessionID=:SID";
@@ -298,8 +277,7 @@ class Sessions extends \NDB_Page
             $physioFileObj       = new ElectrophysioFile(
                 intval($physiologicalFileID)
             );
-
-            $fileName = basename(
+            $fileName            = basename(
                 $physioFileObj->getParameter('FilePath')
             );
 
@@ -417,10 +395,18 @@ class Sessions extends \NDB_Page
 
             $fileSummary['downloads'] = $links;
 
+            $fileOutput = $db->pselectone(
+                'SELECT pot.OutputTypeName
+                FROM physiological_output_type pot
+                INNER JOIN physiological_file AS pf
+                ON pf.PhysiologicalFileID=:PFID
+                AND pf.PhysiologicalOutputTypeID=pot.PhysiologicalOutputTypeID',
+                ['PFID' => $physiologicalFileID]
+            );
             //Get the annotation data if the output type is derivative
-            if (in_array($outputType, ['derivatives', 'all_types'])) {
+            //if (in_array($outputType, ['derivatives', 'all_types'])) {
+            if (strcmp($fileOutput, 'derivative') == 0) {
                 $annotations = $this->getAnnotations(intval($physiologicalFileID));
-
                 $fileSummary['annotations'] = $annotations;
             }
 
@@ -523,14 +509,14 @@ class Sessions extends \NDB_Page
         $params['PFID'] = $physioFileID;
 
         //Get the annotation file IDs
-        $instanceFileID = $db->pselect(
+        $instanceFileID = $db->pselectone(
             'SELECT AnnotationFileID
                 FROM physiological_annotation_file
                 WHERE PhysiologicalFileID=:PFID
                 AND FileType="tsv"',
             $params
         );
-        $metadataFileID = $db->pselect(
+        $metadataFileID = $db->pselectone(
             'SELECT AnnotationFileID
                 FROM physiological_annotation_file
                 WHERE PhysiologicalFileID=:PFID
@@ -538,14 +524,11 @@ class Sessions extends \NDB_Page
             $params
         );
 
-        $params['instance_FID'] = $instanceFileID;
-        $params['metadata_FID'] = $metadataFileID;
-
         //Get the information for each annotation for the given file
         $annotationInstance  = $db->pselect(
             'SELECT * FROM physiological_annotation_instance
                 WHERE AnnotationFileID=:instance_FID',
-            $params
+            ['instance_FID' => $instanceFileID]
         );
         $result['instances'] = $annotationInstance;
 
@@ -553,7 +536,7 @@ class Sessions extends \NDB_Page
         $annotationMetadata = $db->pselect(
             'SELECT * FROM physiological_annotation_parameter
                 WHERE AnnotationFileID=:metadata_FID',
-            $params
+            ['metadata_FID' => $metadataFileID]
         );
         $result['metadata'] = $annotationMetadata;
 
@@ -578,14 +561,14 @@ class Sessions extends \NDB_Page
      */
     function _updateAnnotation(ServerRequestInterface $request)
     {
-        $values        = $request->getQueryParams();
-        $physioFileID  = $values['physioFileID'];
-        $params        = ['PFID' => $physioFileID];
-        $instance_data = $values['instance'];
-        $user          = \NDB_Factory::singleton()->user();
-        $db            = \NDB_Factory::singleton()->database();
+        $user = \NDB_Factory::singleton()->user();
+        if ($user->hasPermission('electrophysiology_browser_edit_annotations')) {
 
-        if ($this->_hasEditDerivPerms($user)) {
+            $values        = $request->getQueryParams();
+            $physioFileID  = $values['physioFileID'];
+            $params        = ['PFID' => $physioFileID];
+            $instance_data = $values['instance'];
+            $db            = \NDB_Factory::singleton()->database();
 
             $physioFilePath = $db->pselectone(
                 'SELECT FilePath
@@ -645,17 +628,12 @@ class Sessions extends \NDB_Page
 
                 //Create new filepaths
                 //Get data directory base path from Config
-                $dataDirID = $db->pselectone(
-                    'SELECT ID
-                        FROM ConfigSettings
-                        WHERE Name=:name',
-                    ['name' => 'dataDirBasepath']
-                );
-                $dataDir   = $db->pselectone(
+                $dataDir = $db->pselectone(
                     'SELECT Value
-                        FROM Config
-                        WHERE ConfigID=:id',
-                    ['id' => $dataDirID]
+                    FROM Config AS config
+                    INNER JOIN ConfigSettings AS c
+                    ON c.Name=:name AND config.ConfigID=c.ID',
+                    ['name' => 'dataDirBasepath']
                 );
                 //Create path with correct structure
                 $subPath       = strstr($physioFilePath, "sub");
@@ -815,15 +793,15 @@ class Sessions extends \NDB_Page
      */
     function _deleteAnnotation(ServerRequestInterface $request)
     {
-        $values = $request->getQueryParams();
-        $user   = \NDB_Factory::singleton()->user();
-        $db     = \NDB_Factory::singleton()->database();
-        $params = [
-            'AnnotationFileID'     => $values['annotationFileID'],
-            'AnnotationInstanceID' => $values['instance_id']
-        ];
+        $user = \NDB_Factory::singleton()->user();
+        if ($user->hasPermission('electrophysiology_browser_edit_annotations')) {
 
-        if ($this->_hasEditDerivPerms($user)) {
+            $values = $request->getQueryParams();
+            $db     = \NDB_Factory::singleton()->database();
+            $params = [
+                'AnnotationFileID'     => $values['annotationFileID'],
+                'AnnotationInstanceID' => $values['instance_id']
+            ];
             $db->delete("physiological_annotation_instance", $params);
         }
     }
@@ -842,83 +820,56 @@ class Sessions extends \NDB_Page
         $db = \NDB_Factory::singleton()->database();
 
         //Get data directory base path from Config
-        $dataDirID = $db->pselectone(
-            'SELECT ID
-            FROM ConfigSettings
-            WHERE Name=:name',
-            ['name' => 'dataDirBasepath']
-        );
-        $dataDir   = $db->pselectone(
+        $dataDir = $db->pselectone(
             'SELECT Value
-            FROM Config
-            WHERE ConfigID=:id',
-            ['id' => $dataDirID]
+        FROM Config AS config
+        INNER JOIN ConfigSettings AS c
+        ON c.Name=:name AND config.ConfigID=c.ID',
+            ['name' => 'dataDirBasepath']
         );
 
         $tsv_entries = [
             'onset', 'duration', 'label', 'channels', 'aboslute_time', 'description'
         ];
 
-        $params      = ['PFID' => $physioFileID];
-        $tsv_id      = $db->pselectone(
-            "SELECT AnnotationFileID
+        $params   = ['PFID' => $physioFileID];
+        $tsv      = $db->pselect(
+            "SELECT 
+              AnnotationFileID AS id,
+              FilePath         AS filePath,
+              LastUpdate       AS lastUpdate
             FROM physiological_annotation_file
             WHERE PhysiologicalFileID=:PFID
             AND FileType='tsv'",
             $params
         );
-        $tsv_path    = $db->pselectone(
-            "SELECT FilePath
-            FROM physiological_annotation_file
-            WHERE PhysiologicalFileID=:PFID
-            AND FileType='tsv'",
-            $params
-        );
-        $tsv_update  = $db->pselectone(
-            "SELECT LastUpdate
-            FROM physiological_annotation_file
-            WHERE PhysiologicalFileID=:PFID
-            AND FileType='tsv'",
-            $params
-        );
-        $json_id     = $db->pselectone(
-            "SELECT AnnotationFileID
+        $json     = $db->pselect(
+            "SELECT 
+              AnnotationFileID AS id,
+              FilePath         AS filePath,
+              LastUpdate       AS lastUpdate
             FROM physiological_annotation_file
             WHERE PhysiologicalFileID=:PFID
             AND FileType='json'",
             $params
         );
-        $json_path   = $db->pselectone(
-            "SELECT FilePath
-            FROM physiological_annotation_file
-            WHERE PhysiologicalFileID=:PFID
-            AND FileType='json'",
-            $params
-        );
-        $json_update = $db->pselectone(
-            "SELECT LastUpdate
-            FROM physiological_annotation_file
-            WHERE PhysiologicalFileID=:PFID
-            AND FileType='json'",
-            $params
-        );
-        $tgz_path    = $db->pselectone(
+        $tgz_path = $db->pselectone(
             "SELECT FilePath
             FROM physiological_annotation_archive
             WHERE PhysiologicalFileID=:PFID",
             $params
         );
 
-        $tsv_path  = $dataDir.$tsv_path;
-        $json_path = $dataDir.$json_path;
+        $tsv_path  = $dataDir.$tsv[0]['filePath'];
+        $json_path = $dataDir.$json[0]['filePath'];
         $tgz_path  = $dataDir.$tgz_path;
 
         $tsv_timestamp  = filemtime($tsv_path);
         $json_timestamp = filemtime($json_path);
 
         //Update files if files updated before database updated
-        if ($tsv_timestamp > $tsv_update
-            || $json_timestamp > $json_update
+        if ($tsv_timestamp > $tsv[0]['lastUpdate']
+            || $json_timestamp > $json[0]['lastUpdate']
         ) {
             //Update the three files with the given paths
             $labels   = []; // Label Name => Label Description
@@ -932,43 +883,30 @@ class Sessions extends \NDB_Page
             //change anything null to n/a
             $instances = $db->pselect(
                 "SELECT
-                Onset,
-                Duration,
-                AnnotationLabelID,
-                Channels,
-                AbsoluteTime,
-                Description
-                FROM physiological_annotation_instance
+                  p.Onset AS Onset,
+                  p.Duration AS Duration,
+                  l.LabelName AS LabelName,
+                  l.LabelDescription AS LabelDescription,
+                  p.Channels AS Channels,
+                  p.AbsoluteTime AS AbsoluteTime,
+                  p.Description AS Description
+                FROM physiological_annotation_instance p
+                  LEFT JOIN physiological_annotation_label l 
+                    ON (l.AnnotationLabelID=p.AnnotationLabelID)
                 WHERE AnnotationFileID=:AFID",
-                ['AFID' => $tsv_id]
+                ['AFID' => $tsv[0]['id']]
             );
 
             foreach ($instances as $instance) {
 
-                //First, get label name/description
-                $label_name = $db->pselectone(
-                    "SELECT LabelName
-                    FROM physiological_annotation_label
-                    WHERE AnnotationLabelID=:labelID",
-                    ['labelID' => $instance['AnnotationLabelID']]
-                );
-                $label_desc = $db->pselectone(
-                    "SELECT LabelDescription
-                    FROM physiological_annotation_label
-                    WHERE AnnotationLabelID=:labelID",
-                    ['labelID' => $instance['AnnotationLabelID']]
-                );
-
-                if (is_null($label_name)) {
-                    $label_name = "";
-                }
-                $labels[$label_name] = $label_desc;
+                //Add labels to list for parameter file
+                $labels[$instance['LabelName']] = $instance['LabelDescription'];
 
                 //Setup each column in correct order
                 $input_tsv = [
                     $instance['Onset'],
                     $instance['Duration'],
-                    $label_name,
+                    $instance['LabelName'],
                     $instance['Channels'],
                     $instance['AbsoluteTime'],
                     $instance['Description']
@@ -992,27 +930,27 @@ class Sessions extends \NDB_Page
             $json_desc   = $db->pselectone(
                 "SELECT Description
                 FROM physiological_annotation_parameter
-                WHERE AnnotationFileID=:PFID",
-                ['PFID' => $json_id]
+                WHERE AnnotationFileID=:AFID",
+                ['AFID' => $json[0]['id']]
             );
             $json_source = $db->pselectone(
                 "SELECT Sources
                 FROM physiological_annotation_parameter
-                WHERE AnnotationFileID=:PFID",
-                ['PFID' => $json_id]
+                WHERE AnnotationFileID=:AFID",
+                ['AFID' => $json[0]['id']]
             );
             $json_author = $db->pselectone(
                 "SELECT Author
                 FROM physiological_annotation_parameter
-                WHERE AnnotationFileID=:PFID",
-                ['PFID' => $json_id]
+                WHERE AnnotationFileID=:AFID",
+                ['AFID' => $json[0]['id']]
             );
             //Get "IntendedFor" entry: physiological file path
             $physioFilePath = $db->pselectone(
                 "SELECT FilePath
                 FROM physiological_file
                 WHERE PhysiologicalFileID=:PFID",
-                ['PFID' => $physioFileID]
+                $params
             );
 
             $input_json   = [

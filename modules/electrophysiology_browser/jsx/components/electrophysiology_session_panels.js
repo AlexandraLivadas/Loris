@@ -567,11 +567,7 @@ class FilePanel extends Component {
      *                          all files or annotation files
      */
     updateAnnotationFiles(filePath) {
-        console.log('The link was clicked.');
-        console.log(this.state.physiologicalFileID);
-        // const data = {physioFileID: this.state.physiologicalFileID,
-        //              filePath: filePath};
-        const dataURL = this.props.url
+        const dataURL = this.props.action
                         + '&physioFileID=' + this.state.physiologicalFileID
                         + '&filePath=' + filePath;
         fetch(dataURL, {
@@ -600,9 +596,9 @@ class FilePanel extends Component {
      * @param {string} message - message content
      */
     showAlertMessage(msgType, message) {
-        let type = 'success';
+        let type = '';
         let title = 'Files updated!';
-        let text = message || '';
+        const text = message || '';
         let timer = null;
         let confirmation = true;
         let callback = function() {};
@@ -621,8 +617,8 @@ class FilePanel extends Component {
             type: type,
             text: text,
             timer: timer,
-            allowOutsideClick: false,
-            allowEscapeKey: false,
+            allowOutsideClick: true,
+            allowEscapeKey: true,
             showConfirmButton: confirmation,
         }, callback.bind(this));
     }
@@ -633,7 +629,7 @@ FilePanel.propTypes = {
   title: PropTypes.string,
   data: PropTypes.object,
   physiologicalFileID: PropTypes.string,
-  url: PropTypes.string,
+  action: PropTypes.string,
 };
 FilePanel.defaultProps = {
   id: 'file_panel',
