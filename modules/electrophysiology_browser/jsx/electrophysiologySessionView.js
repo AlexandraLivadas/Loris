@@ -263,7 +263,7 @@ class ElectrophysiologySessionView extends Component {
               id={'filename_panel_' + i}
               title={this.state.database[i].file.name}
               data={this.state.database[i].file}
-              fileId={this.state.database[i].file.id}
+              physiologicalFileID={this.state.database[i].file.id}
               url={loris.BaseURL + '/electrophysiology_browser/sessions/'
                     + this.props.sessionid
                     + '?outputType=' + this.state.url.params['outputType']}

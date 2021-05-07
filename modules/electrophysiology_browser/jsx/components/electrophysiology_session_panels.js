@@ -19,10 +19,10 @@ class FilePanel extends Component {
     super(props);
     this.state = {
       data: this.props.data,
-      id: this.props.fileId,
+      physiologicalFileID: this.props.physiologicalFileID,
     };
     this.showAlertMessage = this.showAlertMessage.bind(this);
-    this.handleClick = this.handleClick.bind(this);
+    this.updateAnnotationFiles = this.updateAnnotationFiles.bind(this);
   }
 
   /**
@@ -245,11 +245,9 @@ class FilePanel extends Component {
                 >All Files</div>
                 <div className={'col-xs-2'}>
                   <a id='download_all_files'
-                     href={'/mri/jiv/get_file.php?file='
-                          + this.state.data.downloads[5].file}
-                     target='_blank'
-                     download={this.state.data.downloads[0].file}
-                     onClick={this.handleClick}
+                     onClick={() => this.updateAnnotationFiles(
+                         this.state.data.downloads[5].file
+                     )}
                   >
                     <button id='btn_download_all_files'
                             style={stylesFile.button.download}
@@ -331,7 +329,10 @@ class FilePanel extends Component {
                 >Annotations</div>
                 <div className={'col-xs-2'}>
                   <a id='download_annotations'
-                     onClick={this.handleClick}
+                     onClick={() => this.updateAnnotationFiles(
+                         this.state.data.downloads[4].file
+                     )}
+                     download={this.state.data.downloads[0].file}
                   >
                     <button id='btn_download_annotations'
                             style={stylesFile.button.download}
@@ -561,27 +562,28 @@ class FilePanel extends Component {
     /**
      * Called by download all or download annotations button to
      * update the annotation files before downloading
+     *
+     * @param {string} filePath Specifies if downloading
+     *                          all files or annotation files
      */
-    handleClick() {
+    updateAnnotationFiles(filePath) {
         console.log('The link was clicked.');
-        console.log(this.state.id);
-        const data = {physioFileID: this.state.id};
-
-        fetch(this.props.url, {
-            method: 'PUT',
-            body: JSON.stringify(data),
+        console.log(this.state.physiologicalFileID);
+        // const data = {physioFileID: this.state.physiologicalFileID,
+        //              filePath: filePath};
+        const dataURL = this.props.url
+                        + '&physioFileID=' + this.state.physiologicalFileID
+                        + '&filePath=' + filePath;
+        fetch(dataURL, {
+            method: 'GET',
         }).then((response) => {
             if (!response.ok) {
                 console.error(response.status);
                 return;
             }
-
-            response.json().then((data) => {
-                let msgType = 'success';
-                let message = 'Your files will be downloaded in 2 seconds!';
-                this.showAlertMessage(msgType, message);
-                console.log(message);
-            });
+            let msgType = 'success';
+            let message = 'Your files will be downloaded in 2 seconds!';
+            this.showAlertMessage(msgType, message);
         }).catch((error) => {
             console.error(error);
 
@@ -630,13 +632,13 @@ FilePanel.propTypes = {
   id: PropTypes.string,
   title: PropTypes.string,
   data: PropTypes.object,
+  physiologicalFileID: PropTypes.string,
   url: PropTypes.string,
 };
 FilePanel.defaultProps = {
   id: 'file_panel',
   title: 'FILENAME',
   data: {},
-  url: '',
 };
 
 export {
