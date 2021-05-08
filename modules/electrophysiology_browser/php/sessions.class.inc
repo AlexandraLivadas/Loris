@@ -379,7 +379,7 @@ class Sessions extends \NDB_Page
 
             //Get the annotation data if the output type is derivative
             if (strcmp($fileOutput, 'derivative') == 0) {
-                $annotations = $this->getAnnotations(intval($physiologicalFileID));
+                $annotations = Annotations::get(intval($physiologicalFileID));
                 $fileSummary['annotations'] = $annotations;
             }
 
