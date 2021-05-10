@@ -17,6 +17,8 @@ namespace LORIS\electrophysiology_browser;
 use \Psr\Http\Message\ServerRequestInterface;
 use \Psr\Http\Message\ResponseInterface;
 use LORIS\electrophysiology_browser\Models\ElectrophysioFile;
+use LORIS\electrophysiology_browser\Models\ElectrophysioAnnotations;
+
 
 /**
  * Provides the PHP code for the menu filter for the electrophysiology browser
@@ -379,8 +381,10 @@ class Sessions extends \NDB_Page
 
             //Get the annotation data if the output type is derivative
             if (strcmp($fileOutput, 'derivative') == 0) {
-                $annotations = Annotations::get(intval($physiologicalFileID));
-                $fileSummary['annotations'] = $annotations;
+                $annotations = new ElectrophysioAnnotations(
+                    intval($physiologicalFileID)
+                );
+                $fileSummary['annotations'] = $annotations->getData();
             }
 
             $fileCollection[]['file'] = $fileSummary;
