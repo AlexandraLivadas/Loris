@@ -8,7 +8,7 @@ Important standards and practices documented in our repo include:
 
 * [Coding Standards](../../CodingStandards.md)  
 
-* [Pull Request Checklist](https://github.com/aces/Loris/wiki/Code-Review-Checklist) and [Code Review guidelines](Code_Review_Guide.md)
+* [Code Review guidelines](Code_Review_Guide.md)
 
 ## 1. Working off your fork
 During installation, you made your own fork of LORIS. Now you can add two remote options in order to switch between your fork and “aces”.
@@ -110,7 +110,7 @@ Don’t leave obvious template words like “(if applicable)” in your issue.
 Once you have created a new branch and pushed an initial commit to it, you will see the option to make a pull request on GitHub. 
 Make sure that the branch you are merging into is the branch that you checked-out when you first started making changes, such as main or a release-specific branch.
 
-PRs must be reviewed according to this [checklist](https://github.com/aces/Loris/wiki/Code-Review-Checklist), and must be approved by two reviewers before they are merged. Don’t forget to think about documentation updates like the TestPlan, changelog, and developer guide updates -- these must accompany your PR.
+PRs must be reviewed according to the checklist provided in the [Code Review Guide](Code_Review_Guide.md) and must be approved by two reviewers before they are merged. Don’t forget to think about documentation updates like the TestPlan, changelog, and developer guide updates -- these must accompany your PR.
 
 Make sure to note special rules for SQL patches. Note that changes to Raisinbread data do not need patches, because RaisinBread is maintained by sourcing the project patches.
 
@@ -205,7 +205,7 @@ For example:
 
 2. A more complicated tool that can be used to solve bigger rebasing errors is the command [`git cherry-pick`](https://git-scm.com/docs/git-cherry-pick). This command allows you to pick specific commits to apply to a branch. For example, if you rebase the wrong branch or your PR is incorrectly displaying all the commits or files from the branch you rebased, this tool will come in handy. Here is an example workflow:   
     ```
-    git checkout branch_name          # The branch that got messed up :(
+    git checkout branch_name          # The branch with rebasing errors
     git branch -m "temp_branch_name"  # Change the branch name locally:
                                       # This is a failsafe since you will
                                       # be changing the history of the
@@ -220,10 +220,9 @@ For example:
     ```
 
 ## 6. Accessing a Database
-To access the database, use the following command, using the credentials given to you:  
+To access the database, use the following command with the credentials given to you and provide the password on prompt:  
 ```
 mysql -u user -h host database -p
 ```
-and provide the password on prompt.
 
 If you are new to the MySQL commandline, try using `\G` instead of `;` at the end of a query - this will print one column value per line, which makes the query output easier to read.
