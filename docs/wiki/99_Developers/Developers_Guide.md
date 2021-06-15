@@ -4,9 +4,9 @@ This document covers topics including making PRs, issues, and how to go through 
 ## Key Links
 Important standards and practices documented in our repo include:  
 
-* [Contributing.md](../../../CONTRIBUTING.md) - How to contribute to Loris  
+* [Contributing to Loris](../../../CONTRIBUTING.md)
 
-* [Coding Standards](../../CodingStandards.md)  
+* [Coding Standards](../../CodingStandards.md)
 
 * [Code Review guidelines](Code_Review_Guide.md)
 
