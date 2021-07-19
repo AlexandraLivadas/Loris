@@ -80,7 +80,7 @@ Running unit or integration tests (useful if making significant changes to any m
     npm run tests:unit -- --filter CandidateTest::someTest
     npm run tests:integration
 
-### Good practice for Travis CI
+### Good practice for GitHub Actions
 As you get more comfortable with commits and PRs, to save time and Travis errors you can configure your setup so that `make checkstatic` must complete successfully 
 before any git push can be done. To do this, run 
 
@@ -128,8 +128,7 @@ Be sure to observe and follow team conventions for how PRs should be named and d
 
 **[Contents](https://github.com/aces/Loris/blob/main/.github/PULL_REQUEST_TEMPLATE.md) of the initial comment:** Include a brief summary of the changes and rationale, links to related issues or PRs, and testing instructions if there are any. 
 
-**Linking issues:** Use GitHub keywords like `Fixes` or `Resolves` so that related issues are closed automatically when the PR is merged. Do not use these keywords if you are only addressing one point raised in an issue. This will close the entire issue and leave unresolved bugs in the codebase.
-**Note** that automatic issue-linking and issue-closing only works on the default (main) branch.  If the PR is not on the default branch, you will need to manually close the issue after the PR is merged. 
+**Linking issues:** Use GitHub keywords like `Fixes` or `Resolves` so that related issues are closed automatically when the PR is merged. Do not use these keywords if you are only addressing one point raised in an issue. This will close the entire issue and leave unresolved bugs in the codebase. **Note** that automatic issue-linking and issue-closing only works on the default (main) branch.  If the PR is not on the default branch, you will need to manually close the issue after the PR is merged. 
 
 **Labels:** On the right side of the browser, you will see the option to add labels. Please add any that are related to the PR. 
 **If** you are working on release testing, make sure to include the label (ex. 23.0.0-testing) to the PR.
@@ -137,8 +136,8 @@ Be sure to observe and follow team conventions for how PRs should be named and d
 **Reviewers/Assignees:** Reviewers are people that you would like to ping specifically, but are not the same as assignees.
 Be sure to consult the Contributing and Code Review guidelines. For example, 2 reviewers must approve the PR and any code change must be pulled and tested by a developer before a PR is marked as `Passed Manual Tests`. 
 
-**Travis:** The Travis build status and results are linked near the bottom of your PR in GitHub. 
-You can restart Travis if it gives error messages that seem inappropriate, or if the build stalls (for longer than 1h).
+**GitHub Actions:** The build status and automated test results are linked near the bottom of your PR in GitHub. 
+You can restart the build if it gives error messages that seem inappropriate or if it stalls (for longer than 1h).
 
 **Documentation PRs:** If working specifically on markdown files or other documentation, be sure to check the actual look of the document once you have pushed your PR and fix any formatting errors. You can do this by going to “Files Changed” and viewing how your markdown file will actually appear in GitHub. Don’t forget to click all links to make sure they won't be broken when the document is rendered. 
 
@@ -218,11 +217,3 @@ For example:
     git cherry-pick <commit-hash>     # Cherry-pick the commits that you would like to keep
     git push --force-with-lease my_fork "branch_name"
     ```
-
-## 6. Accessing a Database
-To access the database, use the following command with the credentials given to you and provide the password on prompt:  
-```
-mysql -u user -h host database -p
-```
-
-If you are new to the MySQL commandline, try using `\G` instead of `;` at the end of a query - this will print one column value per line, which makes the query output easier to read.
